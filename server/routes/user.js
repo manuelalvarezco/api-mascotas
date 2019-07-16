@@ -3,9 +3,11 @@ const bcrypt = require('bcrypt');
 const _ = require('underscore');
 
 const User = require('../models/user') // Importar el userSchema
+
+const { verifyToken, verifyAdminRole } = require('../middlewares/autentication')
 const app = express()
 
-app.get('/user', function(req, res) {
+app.get('/user', verifyToken, (req, res) => {
 
     let from = req.query.from || 0;
     from = Number(from);
@@ -37,7 +39,7 @@ app.get('/user', function(req, res) {
         });
 })
 
-app.post('/user', function(req, res) {
+app.post('/user', [verifyToken, verifyAdminRole], (req, res) => {
 
     let body = req.body;
 
@@ -71,7 +73,7 @@ app.post('/user', function(req, res) {
 
 })
 
-app.put('/user/:id', function(req, res) {
+app.put('/user/:id', [verifyToken, verifyAdminRole], (req, res) => {
     let id = req.params.id;
 
     let body = _.pick(req.body, ['name', 'email', 'adrress', 'city', 'country', 'phone', 'img', 'role', 'state']);
@@ -93,14 +95,14 @@ app.put('/user/:id', function(req, res) {
 
 })
 
-app.delete('/user/:id', function(req, res) {
+app.delete('/user/:id', [verifyToken, verifyAdminRole], (req, res) => {
 
     let id = req.params.id;
 
     let changeState = {
-        estate: false
+        state: false
     }
-    User.findByIdAndUpdate(id, changeState, { new: true }, (err, userDelete) => {
+    User.findOneAndUpdate(id, changeState, { new: true }, (err, userDelete) => {
 
         if (err) {
             return res.status(400).json({
